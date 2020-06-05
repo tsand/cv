@@ -1,0 +1,43 @@
+name: Main
+
+on: push
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Compile LaTeX document
+      uses: xu-cheng/latex-action@v2
+      with:
+        root_file: cv.tex
+
+    - name: Upload document
+      uses: actions/upload-artifact@v2
+      with:
+        name: cv
+        path: cv.pdf
+
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+    needs: compile
+
+    steps:
+      - name: Download document
+        uses: actions/download-artifact@v1
+        with:
+          name: cv
+
+      - name: Upload to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./cv.pdf
+          asset_name: cv.pdf
+          asset_content_type: application/pdf
